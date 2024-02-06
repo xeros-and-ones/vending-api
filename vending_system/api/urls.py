@@ -14,9 +14,6 @@ from .views import (
 )
 
 urlpatterns = [
-    path("deposit/", Deposit.as_view()),
-    path("reset", ResetDeposit.as_view()),
-    path("buy", Buy.as_view()),
     path("users/create", CreateUser.as_view()),
     path("users/view", ViewUsers.as_view()),
     path("users/delete", DeleteUsers.as_view()),
@@ -25,4 +22,7 @@ urlpatterns = [
     path("products/view", ProductList.as_view()),
     path("products/<int:product_id>/delete", ProductDelete.as_view()),
     path("products/<int:product_id>/update", ProductUpdate.as_view()),
+    path("deposit/", Deposit.as_view()),
+    path("reset", ResetDeposit.as_view()),
+    path("buy", Buy.as_view()),
 ]
