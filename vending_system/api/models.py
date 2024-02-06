@@ -15,18 +15,25 @@ class User(models.Model):
     role = models.CharField(choices=ROLE_CHOICES, default="BUYER", max_length=20)
 
     def __str__(self) -> str:
-        return f"username: {self.username} \n" f"deposit: {self.deposit} \n" f"Role: {self.role} \n"
+        if self.role == "BUYER":
+            return (
+                f"username: {self.username} \n"
+                f"deposit: {self.deposit} \n"
+                f"Role: {self.role} \n"
+            )
+        else:
+            return f"username: {self.username} \n" f"Role: {self.role} \n"
 
 
 class Product(models.Model):
-    seller_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    seller = models.ForeignKey(User, on_delete=models.CASCADE)
     amount_available = models.IntegerField()
     cost = models.IntegerField()
     product_name = models.CharField(null=False, max_length=30)
 
     def __str__(self) -> str:
         return (
-            f"seller_id: {self.seller_id} \n"
+            f"seller_id: {self.seller} \n"
             f"amount available: {self.amount_available} \n"
             f"cost: {self.cost} \n"
             f"product name: {self.product_name}"
