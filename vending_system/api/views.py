@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.views import APIView, Response
 from .serializers import (
     DeleteProductSerializer,
@@ -27,7 +28,8 @@ class CreateUser(APIView):
             return Response(
                 {
                     "Message": f"{user.username}, you have been successfully registered as a {user.role}."
-                }
+                },
+                status=status.HTTP_201_CREATED,
             )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -101,10 +103,13 @@ class CreateProduct(APIView):
                     {
                         "Message": f"Product {request.data['product_name']} Record has been Added Successfully"
                     },
-                    status=status.HTTP_200_OK,
+                    status=status.HTTP_201_CREATED,
                 )
             else:
-                return Response({"Message": "User Doesn't Appear to be A Seller"})
+                return Response(
+                    {"Message": "User Doesn't Appear to be A Seller"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
         else:
             return Response({"Message": "something Went Wrong"})
@@ -116,8 +121,9 @@ class ProductDelete(APIView):
     def post(self, request, product_id):
         username = request.data.get("username")
         password = request.data.get("password")
-        user = User.objects.get(username=username)
-        if not user:
+        try:
+            user = User.objects.get(username=username)
+        except ObjectDoesNotExist:
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
         product = get_object_or_404(Product, id=product_id)
@@ -158,15 +164,16 @@ class ProductUpdate(APIView):
     def put(self, request, product_id):
         username = request.data.get("username")
         password = request.data.get("password")
-        user = User.objects.get(username=username)
-        if user is None:
+        try:
+            user = User.objects.get(username=username)
+        except ObjectDoesNotExist:
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
         product = get_object_or_404(Product, id=product_id)
 
         if product.seller != user:
             return Response(
-                {"detail": "You do not have permission to delete this product."},
+                {"detail": "You do not have permission to update this product."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -178,7 +185,7 @@ class ProductUpdate(APIView):
             product.save()
             return Response(
                 {"Message": f"Product {product.product_name} Updated Successfully"},
-                status=status.HTTP_204_NO_CONTENT,
+                status=status.HTTP_200_OK,
             )
         else:
             return Response(
@@ -191,18 +198,31 @@ class Deposit(APIView):
     serializer_class = DepositSerializer
 
     def post(self, request):
-        user = User.objects.get(username=request.data["username"])
+        try:
+            user = User.objects.get(username=request.data["username"])
+        except ObjectDoesNotExist:
+            return Response(
+                {"Message": f"{request.data['username']} doesn't appearn to be a valid user"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if user and user.password == request.data["password"]:
             if user.role == "BUYER":
-                user.deposit += int(request.data["deposit"])
+                if user.deposit is None or user.deposit == 0:
+                    user.deposit = int(request.data["deposit"])
+                else:
+                    user.deposit += int(request.data["deposit"])
                 user.save()
                 return Response(
                     {
                         "Message": f"{user.username}, you have successfully added {request.data['deposit']} your balance is {user.deposit}."
-                    }
+                    },
+                    status=status.HTTP_200_OK,
                 )
             else:
-                return Response({"Message": f"{user.username} doesn't appear to be a buyer"})
+                return Response(
+                    {"Message": f"{user.username} doesn't appear to be a buyer"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
         else:
             return Response(
                 {"Message": "something wrong happend"},
@@ -224,7 +244,10 @@ class ResetDeposit(APIView):
                     status=status.HTTP_200_OK,
                 )
             else:
-                return Response({"Message": f"{user.username} doesn't appear to be a buyer"})
+                return Response(
+                    {"Message": f"{user.username} doesn't appear to be a buyer"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             return Response(
                 {"Message": "Something Wrong with Credentials"},
@@ -255,7 +278,10 @@ class Buy(APIView):
                 amount = int(request.data["amount"])
                 total = price * amount
                 if product.amount_available <= 0:
-                    return Response({"Message": f"{product.product_name} is out of stock"})
+                    return Response(
+                        {"Message": f"{product.product_name} is out of stock"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
                 if user.deposit >= total:
                     user.deposit -= total
                     user.save()
@@ -265,14 +291,19 @@ class Buy(APIView):
                     return Response(
                         {
                             "Success": f"you bought {amount} {product.product_name}. the total was {total} and the remaining is {change}"
-                        }
+                        },
+                        status=status.HTTP_200_OK,
                     )
                 else:
                     return Response(
-                        {"Message": f"Not enough funds, You're short of {total - user.deposit}"}
+                        {"Message": f"Not enough funds, You're short of {total - user.deposit}"},
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
             else:
-                return Response({"Message": f"{user.username} doesn't appear to be a buyer"})
+                return Response(
+                    {"Message": f"{user.username} doesn't appear to be a buyer"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
         else:
             return Response(
                 {"Message": "Something Wrong with Credentials"},
