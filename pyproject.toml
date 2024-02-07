@@ -1,7 +1,9 @@
 [tool.poetry]
 name = "flapkap-vending-api"
 version = "0.1.0"
-description = "an API for a vending machine, allowing users with a “seller” role to add, update or remove products, while users with a “buyer” role"
+description = "an API for a vending machine, allowing users
+with a “seller” role to add, update or remove products, while users with a “buyer” role
+can deposit coins into the machine and make purchases"
 authors = ["Mohamed Tarek <mohamed96tarek@hotmail.com>"]
 readme = "README.md"
 
