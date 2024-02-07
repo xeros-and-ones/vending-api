@@ -1,0 +1,138 @@
+#+AUTHOR: Mohamed Tarek
+#+EMAIL: m96tarek@gmail.com
+
+
+* Introduction:
+an API for a vending machine, allowing users
+with a “seller” role to add, update or remove products,
+while users with a “buyer” role
+can deposit coins into the machine and make purchases* installation & usage:
+
+** Requirements:
+- python > 3.9
+- poetry (optional)
+  + there's a requirements file for non poetry users
+
+** Instructions:
+*** First, we need to clone this repo locally:
+#+begin_src sh
+git clone https://github.com/xeros-and-ones/FlapKap-vending-api.git
+#+end_src
+
+*** we ~cd~ into the clone directory
+#+begin_src shell
+cd path/to/project/directory
+#+end_src
+
+*** init a virtual environment in the root project directory where the =requirements.txt= exists
+**** for poetry:
+Simply Run
+#+begin_src shell
+poetry install
+#+end_src
+
+**** or you can use python's venv:
+#+begin_src shell
+python -m venv .venv
+#+end_src
+
+*** installing dependecies:
+poetry users already have installed the dependecies via the =pyproject.toml=
+
+**** for venv users, the next step, is to source the venv
+***** Linux
+#+begin_src shell
+source .venv/bin/activate
+#+end_src
+
+***** Windows
+#+begin_src shell
+.\.venv\Sripts\activate
+#+end_src
+
+**** then to install the dependecies, run:
+#+begin_src shell
+pip install -r requirements.txt
+#+end_src
+
+** Development Server:
+to run the django development server:
+
+from the project root directory
+
+  ~cd~ into the inner project directory
+  #+begin_src shell
+  cd vending_system
+  #+end_src
+
+Now we can run the server by:
+#+begin_src shell
+python manage.py runserver
+#+end_src
+
+
+* endpoints:
+there are 8 api endpoints and 2 payment api endpoints
+** API:
+*** POST: ~/users/create~
+used to create new users
+
+*** GET: ~/users/view~
+used to view all created Users
+
+*** POST: ~/users/delete~
+used to delete a user's record from the database
+
+*** POST: ~/users/update~
+used to update a user's role
+
+*** POST ~/products/create~
+used to create product if the user is of type =SELLER=
+
+*** GET ~/products/view~
+the investor uses it to make an offer to the borrower's loan
+
+*** POST ~/products/<int:product_id>/delete~
+used to delete a product by it's =ID=
+
+*** PUT ~/products/<int:product_id>/update~
+used to update product's data by it's =ID=
+
+** BUYER Endpoints:
+*** POST ~/deposit/~
+the buyer uses this endpoint to deposit coins with 5,10,20,50,100 denominations to their account
+
+*** POST ~/reset~
+an endpoint to reset a buyer's deposited coins
+
+*** POST ~/buy~
+a Buyer uses this endpoint to buy products and return the change(if applicable) in 5,10,20,50,100 denominations
+
+* database schema:
+there are 2 database tables:
+- =User=:
+  this model contains the data for all users create with =/users/create= endpoint
+
+  the fields are:
+  - username
+  - password
+  - deposit -> None at initialization
+  - role -> =BUYER= or =SELLER=
+
+- =Product=:
+  this model contains all the product objects and a foriegnKey to the seller that posted it
+
+  the fields are:
+  - seller -> ForiegnKey
+  - product_name
+  - cost
+  - amount_available
+
+* Tests:
+django has a builtin unittesting module based on python's own unittest.
+So to run tests, simply run:
+#+begin_src shell
+python manage.py test api
+#+end_src
+
+optionally, you could add ~--verbosity=2~ flag to see verbose info about what's happening
